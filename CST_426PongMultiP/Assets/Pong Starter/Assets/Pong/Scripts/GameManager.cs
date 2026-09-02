@@ -1,5 +1,7 @@
 using TMPro;
+using Unity.Netcode;
 using UnityEngine;
+
 
 /*
  * GameManager owns the local match rules: scoring, win checks, and ball resets.
@@ -8,7 +10,7 @@ using UnityEngine;
  * score is synchronized to every client.
  */
 
-public class GameManager : MonoBehaviour
+public class GameManager : NetworkBehaviour
 {
     [SerializeField] Transform ball;
     [SerializeField] float startSpeed = 3f;
@@ -16,55 +18,72 @@ public class GameManager : MonoBehaviour
     [SerializeField] TextMeshProUGUI leftPlayerScoreText;
     [SerializeField] TextMeshProUGUI rightPlayerScoreText;
 
-    int _leftPlayerScore;
-    int _rightPlayerScore;
-
+    readonly NetworkVariable<int> _leftPlayerScore = new();
+    readonly NetworkVariable<int> _rightPlayerScore = new();
+    
     const int ScoreToWin = 11;
 
-    void Start()
+    public override void OnNetworkSpawn()
+    {
+        _leftPlayerScore.OnValueChanged += OnScoreChanged;
+        _rightPlayerScore.OnValueChanged += OnScoreChanged;
+        
+        UpdateScore();
+        //StartGame();
+    }
+    
+    public override void OnNetworkDespawn()
+    {
+        _leftPlayerScore.OnValueChanged -= OnScoreChanged;
+        _rightPlayerScore.OnValueChanged -= OnScoreChanged;
+    }
+
+    void OnScoreChanged(int oldValue, int newValue)
     {
         UpdateScore();
-        StartGame();
     }
 
     public void StartGame()
     {
+        if (!IsServer) return;
+        
         float direction = Random.value < 0.5f ? -1f : 1f;
         ResetBall(direction);
     }
 
     public void OnGoalScored(PaddleSide scoringSide)
     {
+        if (!IsServer) return;
+        
         // If the ball entered a goal area, increment the score, check for win, and reset the ball
-
+        
         if (scoringSide == PaddleSide.Left)
         {
-            _leftPlayerScore++;
-            Debug.Log($"Left player scored: {_leftPlayerScore}");
+            _leftPlayerScore.Value++;
+            Debug.Log($"Left player scored: {_leftPlayerScore.Value}");
 
-            if (_leftPlayerScore == ScoreToWin)
+            if (_leftPlayerScore.Value == ScoreToWin)
                 Debug.Log("Left player wins!");
             else
                 ResetBall(1f);
         }
         else if (scoringSide == PaddleSide.Right)
         {
-            _rightPlayerScore++;
-            Debug.Log($"Right player scored: {_rightPlayerScore}");
+            _rightPlayerScore.Value++;
+            Debug.Log($"Right player scored: {_rightPlayerScore.Value}");
 
-            if (_rightPlayerScore == ScoreToWin)
+            if (_rightPlayerScore.Value == ScoreToWin)
                 Debug.Log("Right player wins!");
             else
                 ResetBall(-1f);
         }
 
-        UpdateScore();
     }
 
     void UpdateScore()
     {
-        rightPlayerScoreText.text = _rightPlayerScore.ToString();
-        leftPlayerScoreText.text = _leftPlayerScore.ToString();
+        rightPlayerScoreText.text = _rightPlayerScore.Value.ToString();
+        leftPlayerScoreText.text = _leftPlayerScore.Value.ToString();
     }
 
     void ResetBall(float directionSign)

@@ -37,14 +37,17 @@ public class Paddle : NetworkBehaviour
     const float LeftX = -7.5f;
     const float RightX = 7.5f;
 
-    void Awake()
+
+
+    public override void OnNetworkSpawn()
     {
-        
+        side = GetSide();
+        ApplySidePosition();
     }
 
-    void Start()
+    private PaddleSide GetSide()
     {
-        ApplySidePosition();
+        return OwnerClientId == NetworkManager.ServerClientId ? PaddleSide.Left : PaddleSide.Right;
     }
 
     void ApplySidePosition()
@@ -57,6 +60,8 @@ public class Paddle : NetworkBehaviour
 
     void Update()
     {
+        if (!IsOwner) return;
+        
         float direction = 0f;
         if (Keyboard.current[moveUpKey].isPressed) direction += 1f;
         if (Keyboard.current[moveDownKey].isPressed) direction -= 1f;
@@ -69,6 +74,8 @@ public class Paddle : NetworkBehaviour
 
     void OnCollisionEnter(Collision other)
     {
+        if (!IsServer) return;
+        
         // Get world-space bounds
         var paddleBounds = GetComponent<BoxCollider>().bounds;
 

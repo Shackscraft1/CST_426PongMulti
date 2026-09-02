@@ -1,4 +1,5 @@
 using Unity.Netcode;
+using Unity.Networking.Transport;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,7 +9,7 @@ using UnityEngine.UI;
  * references mark where you will start a Host or Client session.
  */
 
-public class SessionManager : MonoBehaviour
+public class SessionManager : NetworkBehaviour
 {
     [Header("Multiplayer")]
     [SerializeField] GameManager gameManager;
@@ -24,9 +25,41 @@ public class SessionManager : MonoBehaviour
     void Awake()
     {
         // Hide Host/Client until you are ready to wire the session.
-        sessionUI.gameObject.SetActive(false);
+        sessionUI.gameObject.SetActive(true);
         
-        startHostButton.onClick.AddListener(() => Debug.Log("TODO: Start Host"));
-        startClientButton.onClick.AddListener(() => Debug.Log("TODO: Start Client"));
+        startHostButton.onClick.AddListener(StartHost);
+        startClientButton.onClick.AddListener(StartClient);
+    }
+
+    void StartHost()
+    {
+        networkManager.StartHost();
+        sessionUI.gameObject.SetActive(false);
+    }
+
+    void StartClient()
+    {
+        networkManager.StartClient();
+        sessionUI.gameObject.SetActive(false);
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        if (!IsServer) return;
+
+        networkManager.OnClientConnectedCallback += OnCLientConnected;
+    }
+    
+    public override void OnNetworkDespawn()
+    {
+        networkManager.OnClientConnectedCallback -= OnCLientConnected;
+    }
+
+    void OnCLientConnected(ulong clientId)
+    {
+        Debug.Log($"CLient {clientId} connected" + $"({networkManager.ConnectedClients.Count} total");
+        
+        if (networkManager.ConnectedClients.Count == 2)
+            gameManager.StartGame();
     }
 }
