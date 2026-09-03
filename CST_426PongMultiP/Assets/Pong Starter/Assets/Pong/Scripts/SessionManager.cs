@@ -21,11 +21,13 @@ public class SessionManager : NetworkBehaviour
     [SerializeField] Button startHostButton;
     [SerializeField] Button startClientButton;
     [SerializeField] Canvas sessionUI;
+    [SerializeField] GameObject connectionButtons;
 
     void Awake()
     {
         // Hide Host/Client until you are ready to wire the session.
         sessionUI.gameObject.SetActive(true);
+        connectionButtons.SetActive(true);
         
         startHostButton.onClick.AddListener(StartHost);
         startClientButton.onClick.AddListener(StartClient);
@@ -33,14 +35,14 @@ public class SessionManager : NetworkBehaviour
 
     void StartHost()
     {
-        networkManager.StartHost();
-        sessionUI.gameObject.SetActive(false);
+        if (networkManager.StartHost())
+            connectionButtons.SetActive(false);
     }
 
     void StartClient()
     {
-        networkManager.StartClient();
-        sessionUI.gameObject.SetActive(false);
+        if (networkManager.StartClient())
+            connectionButtons.SetActive(false);
     }
 
     public override void OnNetworkSpawn()

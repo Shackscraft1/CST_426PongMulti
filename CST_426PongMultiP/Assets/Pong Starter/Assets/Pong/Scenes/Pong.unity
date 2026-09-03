@@ -2686,6 +2686,7 @@ MonoBehaviour:
   startHostButton: {fileID: 106550600}
   startClientButton: {fileID: 1483414517}
   sessionUI: {fileID: 427943453}
+  connectionButtons: {fileID: 1695356249}
 --- !u!114 &1567325797
 MonoBehaviour:
   m_ObjectHideFlags: 0

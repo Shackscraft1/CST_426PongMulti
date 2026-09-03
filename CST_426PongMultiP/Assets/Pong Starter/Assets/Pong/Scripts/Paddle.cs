@@ -37,12 +37,32 @@ public class Paddle : NetworkBehaviour
     const float LeftX = -7.5f;
     const float RightX = 7.5f;
 
+    bool _canMove = true;
 
 
     public override void OnNetworkSpawn()
     {
+        GameManager.OnMatchOver += StopMovement;
+        GameManager.OnMatchStarted += StartMovement;
+
         side = GetSide();
         ApplySidePosition();
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        GameManager.OnMatchOver -= StopMovement;
+        GameManager.OnMatchStarted -= StartMovement;
+    }
+
+    void StopMovement(object sender, EventArgs e)
+    {
+        _canMove = false;
+    }
+
+    void StartMovement(object sender, EventArgs e)
+    {
+        _canMove = true;
     }
 
     private PaddleSide GetSide()
@@ -61,6 +81,7 @@ public class Paddle : NetworkBehaviour
     void Update()
     {
         if (!IsOwner) return;
+        if (!_canMove) return;
         
         float direction = 0f;
         if (Keyboard.current[moveUpKey].isPressed) direction += 1f;
@@ -75,6 +96,7 @@ public class Paddle : NetworkBehaviour
     void OnCollisionEnter(Collision other)
     {
         if (!IsServer) return;
+        if (!_canMove) return;
         
         // Get world-space bounds
         var paddleBounds = GetComponent<BoxCollider>().bounds;
