@@ -87,6 +87,12 @@ public class Paddle : NetworkBehaviour
         if (Keyboard.current[moveUpKey].isPressed) direction += 1f;
         if (Keyboard.current[moveDownKey].isPressed) direction -= 1f;
 
+        if (direction != 0f) MovePaddleRpc(direction);
+    }
+    
+    [Rpc(SendTo.Server)]
+    void MovePaddleRpc(float direction)
+    {
         Vector3 newPosition = transform.position + new Vector3(0f, 0f, direction) * speed * Time.deltaTime;
         newPosition.z = Mathf.Clamp(newPosition.z, minTravelZ, maxTravelZ);
 
