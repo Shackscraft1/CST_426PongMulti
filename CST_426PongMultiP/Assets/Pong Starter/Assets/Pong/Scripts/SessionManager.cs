@@ -31,12 +31,28 @@ public class SessionManager : NetworkBehaviour
         
         startHostButton.onClick.AddListener(StartHost);
         startClientButton.onClick.AddListener(StartClient);
+        networkManager.OnClientDisconnectCallback += OnClientDisconnected;
     }
 
     void StartHost()
     {
+        networkManager.ConnectionApprovalCallback = ApprovalCheck;
         if (networkManager.StartHost())
             connectionButtons.SetActive(false);
+    }
+    
+    void ApprovalCheck(NetworkManager.ConnectionApprovalRequest request, NetworkManager.ConnectionApprovalResponse response)
+    {
+        response.Approved = networkManager.ConnectedClients.Count < 2;
+        response.CreatePlayerObject = response.Approved;
+        if (!response.Approved) response.Reason = "Server is full";
+        response.Pending = false;
+    }
+    
+    void OnClientDisconnected(ulong clientId)
+    {
+        if (!networkManager.IsServer && !string.IsNullOrEmpty(networkManager.DisconnectReason))
+            gameManager.ShowConnectionMessage(networkManager.DisconnectReason);
     }
 
     void StartClient()

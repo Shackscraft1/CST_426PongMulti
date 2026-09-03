@@ -37,7 +37,7 @@ public class GameManager : NetworkBehaviour
     public static event EventHandler OnMatchOver;
     public static event EventHandler OnMatchStarted;
     
-    const int ScoreToWin = 11;
+    const int ScoreToWin = 5;
 
     public override void OnNetworkSpawn()
     {
@@ -146,10 +146,24 @@ public class GameManager : NetworkBehaviour
         bool matchOver = _matchPhase.Value == MatchPhase.GameOver;
 
         matchOverPanel.SetActive(matchOver);
-        restartButton.gameObject.SetActive(IsHost);
+        restartButton.gameObject.SetActive(IsHost && matchOver);
 
         if (matchOver)
             winnerText.text = $"{_winner.Value} Player Wins!";
+    }
+    
+    public void ShowConnectionMessage(string message)
+    {
+        matchOverPanel.SetActive(true);
+        winnerText.text = message;
+        winnerText.color = Color.red;
+        restartButton.gameObject.SetActive(false);
+        Invoke(nameof(CloseGame), 3f);
+    }
+    
+    void CloseGame()
+    {
+        UnityEditor.EditorApplication.Exit(0);
     }
 
     void EndMatch(PaddleSide winner)
